@@ -1,0 +1,310 @@
+CCNP ENARSI
+Curso: OSPF & OSPFv3
+Ejercicio: Configuración OSPFv3 Tradicional 
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Openwebinars requiere desplegar OSPFv3 en su red WAN
+
+Completa las siguientes tareas para implementar OSPFv3 en modo tradicional o legacy
+
+
+
+1. Verifica si existe conectividad desde R2 y R3 a las redes LAN de R1
+
+R2#ping ipv6 3000:db8:1::1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:1::1, timeout is 2 seconds:
+
+% No valid route for destination
+Success rate is 0 percent (0/1)
+R2#
+R2#ping ipv6 3000:db8:2::2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:2::2, timeout is 2 seconds:
+
+% No valid route for destination
+Success rate is 0 percent (0/1)
+R2#ping ipv6 3000:db8:3::3
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:3::3, timeout is 2 seconds:
+
+% No valid route for destination
+Success rate is 0 percent (0/1)
+R2#
+
+R3#ping ipv6 3000:db8:1::1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:1::1, timeout is 2 seconds:
+
+% No valid route for destination
+Success rate is 0 percent (0/1)
+R3#
+R3#ping ipv6 3000:db8:2::2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:2::2, timeout is 2 seconds:
+
+% No valid route for destination
+Success rate is 0 percent (0/1)
+R3#
+R3#ping ipv6 3000:db8:3::3
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:3::3, timeout is 2 seconds:
+
+% No valid route for destination
+Success rate is 0 percent (0/1)
+
+_____________________________________________________________________________________
+
+2. Habilita el enrutamiento IPv6 Unicast, configura OSPFv3 Tradicional para el proceso 1 en R1, R2 y R3, todas las interfaces deben ser pasivas por defecto a excepción de las que interconectan los routers, asigna el router-id según la tabla del ejercicio
+
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#ipv6 unicast-routing
+R1(config)#ipv6 router ospf 1
+R1(config-rtr)#passive-interface default
+R1(config-rtr)#no passive-interface fa0/0
+R1(config-rtr)#router-id 1.1.1.1
+R1(config-rtr)#end
+R1#
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#ipv6 unicast-routing
+R2(config)#ipv6 rou
+R2(config)#ipv6 router ospf 1
+R2(config-rtr)#passive-interface default
+R2(config-rtr)#no passive-interface fa0/0
+R2(config-rtr)#no passive-interface fa1/0
+R2(config-rtr)#router-id 2.2.2.2
+R2(config-rtr)#end
+R2#
+
+R3#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#ipv6 unicast-routing
+R3(config)#ipv6 router ospf 1
+R3(config-rtr)#passive-interface default
+R3(config-rtr)#no passive-interface fa1/0
+R3(config-rtr)#router-id 3.3.3.3
+R3(config-rtr)#end
+R3#
+_____________________________________________________________________________________
+
+3. Habilita OSPFv3 en las interfaces de interconexión entre R1,R2 y R3, asignándole el área correspondiente
+
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#int fa0/0
+R1(config-if)#ipv6 ospf 1 area 0
+R1(config-if)#end
+R1#
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#int fa0/0
+R2(config-if)#ipv6 ospf 1 area 0
+R2(config-if)#int fa1/0
+R2(config-if)#ipv6 ospf 1 area 1
+R2(config-if)#end
+R2#
+
+R3#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#int fa1/0
+R3(config-if)#ipv6 ospf 1 area 1
+R3(config-if)#end
+R3#
+
+
+R1#show ipv6 ospf neighbor
+
+            OSPFv3 Router with ID (1.1.1.1) (Process ID 1)
+
+Neighbor ID     Pri   State           Dead Time   Interface ID    Interface
+2.2.2.2           1   FULL/BDR        00:00:35    2               FastEthernet0/0
+R1#
+
+R2#show ipv6 ospf neighbor
+
+            OSPFv3 Router with ID (2.2.2.2) (Process ID 1)
+
+Neighbor ID     Pri   State           Dead Time   Interface ID    Interface
+1.1.1.1           1   FULL/DR         00:00:36    2               FastEthernet0/0
+3.3.3.3           1   FULL/DR         00:00:39    3               FastEthernet1/0
+R2#
+
+_____________________________________________________________________________________
+
+4. Habilita las interfaces LAN de R1 en el proceso OSPFv3 para que sean anunciadas a R2, verifica que también son propagadas a R3 y que existe conectividad desde R2 y R3
+
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#int lo1
+R1(config-if)#ipv6 ospf 1 area 0
+R1(config-if)#int lo2
+R1(config-if)#ipv6 ospf 1 area 0
+R1(config-if)#int lo3
+R1(config-if)#ipv6 ospf 1 area 0
+R1(config-if)#end
+R1#
+
+
+R2#show ipv6 route ospf
+IPv6 Routing Table - default - 8 entries
+Codes: C - Connected, L - Local, S - Static, U - Per-user Static route
+       B - BGP, R - RIP, H - NHRP, I1 - ISIS L1
+       I2 - ISIS L2, IA - ISIS interarea, IS - ISIS summary, D - EIGRP
+       EX - EIGRP external, ND - ND Default, NDp - ND Prefix, DCE - Destination
+       NDr - Redirect, O - OSPF Intra, OI - OSPF Inter, OE1 - OSPF ext 1
+       OE2 - OSPF ext 2, ON1 - OSPF NSSA ext 1, ON2 - OSPF NSSA ext 2, l - LISP
+O   3000:DB8:1::/64 [110/2]
+     via FE80::C801:46FF:FE50:0, FastEthernet0/0
+O   3000:DB8:2::/64 [110/2]
+     via FE80::C801:46FF:FE50:0, FastEthernet0/0
+O   3000:DB8:3::/64 [110/2]
+     via FE80::C801:46FF:FE50:0, FastEthernet0/0
+R2#
+
+R2#ping ipv6 3000:DB8:1::1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:1::1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 20/40/88 ms
+R2#ping ipv6 3000:DB8:2::2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:2::2, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 20/30/40 ms
+R2#ping ipv6 3000:DB8:3::3
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:3::3, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 32/32/32 ms
+R2#
+
+
+R3#show ipv6 route ospf
+IPv6 Routing Table - default - 7 entries
+Codes: C - Connected, L - Local, S - Static, U - Per-user Static route
+       B - BGP, R - RIP, H - NHRP, I1 - ISIS L1
+       I2 - ISIS L2, IA - ISIS interarea, IS - ISIS summary, D - EIGRP
+       EX - EIGRP external, ND - ND Default, NDp - ND Prefix, DCE - Destination
+       NDr - Redirect, O - OSPF Intra, OI - OSPF Inter, OE1 - OSPF ext 1
+       OE2 - OSPF ext 2, ON1 - OSPF NSSA ext 1, ON2 - OSPF NSSA ext 2, l - LISP
+OI  2001:DB8:1::/126 [110/2]
+     via FE80::C802:11FF:FE18:1C, FastEthernet1/0
+OI  3000:DB8:1::/64 [110/3]
+     via FE80::C802:11FF:FE18:1C, FastEthernet1/0
+OI  3000:DB8:2::/64 [110/3]
+     via FE80::C802:11FF:FE18:1C, FastEthernet1/0
+OI  3000:DB8:3::/64 [110/3]
+     via FE80::C802:11FF:FE18:1C, FastEthernet1/0
+R3#
+
+
+R3#ping ipv6 3000:DB8:1::1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:1::1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 52/65/104 ms
+R3#ping ipv6 3000:DB8:2::2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:2::2, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 52/59/64 ms
+R3#ping ipv6 3000:DB8:3::3
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:3::3, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/60/64 ms
+R3#
+
+_____________________________________________________________________________________
+
+5. Qué LSAs de Tipo 8 existen en la database OSPFv3 de R1 ?
+
+Respuesta: Se visualizan 2 LSA's de Tipo 8, la propia que genera desde su link-local address (FE80::C801:46FF:FE50:0) y la anunciada desde R2 (FE80::C802:11FF:FE18:0)
+
+R1#show ipv6 ospf database link
+
+            OSPFv3 Router with ID (1.1.1.1) (Process ID 1)
+
+                Link (Type-8) Link States (Area 0)
+
+  LS age: 265
+  Options: (V6-Bit, E-Bit, R-bit, DC-Bit)
+  LS Type: Link-LSA (Interface: FastEthernet0/0)
+  Link State ID: 2 (Interface ID)
+  Advertising Router: 1.1.1.1
+  LS Seq Number: 80000001
+  Checksum: 0xFA6
+  Length: 64
+  Router Priority: 1
+  Link Local Address: FE80::C801:46FF:FE50:0
+  Number of Prefixes: 1
+  Prefix Address: 2001:DB8:1::
+  Prefix Length: 126, Options: None
+
+  LS age: 197
+  Options: (V6-Bit, E-Bit, R-bit, DC-Bit)
+  LS Type: Link-LSA (Interface: FastEthernet0/0)
+  Link State ID: 2 (Interface ID)
+  Advertising Router: 2.2.2.2
+  LS Seq Number: 80000001
+  Checksum: 0x140A
+  Length: 64
+  Router Priority: 1
+  Link Local Address: FE80::C802:11FF:FE18:0
+  Number of Prefixes: 1
+  Prefix Address: 2001:DB8:1::
+  Prefix Length: 126, Options: None
+
+R1#
+ 
+_____________________________________________________________________________________
+
+6. Sumariza las redes de R1 sobre la red 3000:DB8::/32 en el ABR, verifica la propagación en R3 y que mantiene la conectividad con las redes LAN de R1 desde R2 y R3
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#ipv6 router ospf 1
+R2(config-rtr)#area 0 range 3000:DB8::/32
+R2(config-rtr)#end
+R2#
+
+
+R3#show ipv6 route ospf
+IPv6 Routing Table - default - 5 entries
+Codes: C - Connected, L - Local, S - Static, U - Per-user Static route
+       B - BGP, R - RIP, H - NHRP, I1 - ISIS L1
+       I2 - ISIS L2, IA - ISIS interarea, IS - ISIS summary, D - EIGRP
+       EX - EIGRP external, ND - ND Default, NDp - ND Prefix, DCE - Destination
+       NDr - Redirect, O - OSPF Intra, OI - OSPF Inter, OE1 - OSPF ext 1
+       OE2 - OSPF ext 2, ON1 - OSPF NSSA ext 1, ON2 - OSPF NSSA ext 2, l - LISP
+OI  2001:DB8:1::/126 [110/2]
+     via FE80::C802:11FF:FE18:1C, FastEthernet1/0
+OI  3000:DB8::/32 [110/3]
+     via FE80::C802:11FF:FE18:1C, FastEthernet1/0
+
+R3#ping 3000:db8:1::1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:1::1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 48/58/64 ms
+R3#
+R3#ping 3000:db8:2::2
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:2::2, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/59/64 ms
+R3#
+R3#ping 3000:db8:3::3
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 3000:DB8:3::3, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/60/64 ms
+R3#
+_____________________________________________________________________________________
+
+

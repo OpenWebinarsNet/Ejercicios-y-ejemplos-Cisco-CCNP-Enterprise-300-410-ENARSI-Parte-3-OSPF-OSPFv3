@@ -1,0 +1,26 @@
+CCNP ENARSI
+Curso: OSPF & OSPFv3
+Ejercicio: Configuración OSPFv3 Address-families 
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Openwebinars requiere desplegar OSPFv3 en su red WAN
+
+Completa las siguientes tareas para implementar OSPFv3 en modo Address-families
+
+
+1. Verifica si existe conectividad desde R2 y R3 a las redes LAN de R1
+2. Habilita el enrutamiento IPv6 Unicast, configura OSPFv3 para el proceso 1 activando el address-family IPv6 unicast en R1, R2 y R3, todas las interfaces deben ser pasivas por defecto a excepción de las que interconectan los routers, asigna el router-id según la tabla del ejercicio
+3. Habilita OSPFv3 en las interfaces de interconexión entre R1,R2 y R3, asignándole el área correspondiente. Confirma que se establece la relación de vecindad entre R1-R2 y R2-R3
+4. Habilita las interfaces LAN de R1 en el proceso OSPFv3 para que sean anunciadas a R2, verifica que también son propagadas a R3 y que existe conectividad desde R2 y R3
+5. Sumariza las redes de R1 sobre la red 3000:DB8::/32 en el ABR, verifica la propagación en R3 y que mantiene la conectividad con las redes LAN de R1 desde R2 y R3
+
+
+
+
+
+
+
+
+
+

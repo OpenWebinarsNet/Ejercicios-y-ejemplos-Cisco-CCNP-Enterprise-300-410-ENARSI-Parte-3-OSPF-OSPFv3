@@ -1,0 +1,19 @@
+CCNP ENARSI
+Curso: OSPF & OSPFv3
+Ejercicio: OSPF TSHOOT 
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Openwebinars ha conectado dos nuevos proveedores a su red WAN, pero presentan problemas a la hora de desplegar OSPF y no hay conectividad entre las sedes
+
+Completa las siguientes tareas para aplicar troubleshooting y poder establecer la conectividad vía OSPF
+
+
+1. Verifica que no existe conectividad desde R1 a las redes LAN de R2 y R3, a su vez verifica si existe vecindad OSPF en R1 con R2 y R3
+2. Realiza Troubleshooting para establecer la vecindad OSPF entre R1 y R2, aplica depuración vía "debug ip ospf adjacencies", además puedes guiarte por las siguientes verificaciones:
+Estado interfaces conexión, proceso OSPF activo global y por interfaz, mismatch áreas, passive-interfaces, autenticación, MTU, ACL, tipos de red router-id duplicados
+3. Una vez establecida la vecindad OSPF entre R1 y R2, verifica que se aprenden correctamente las redes LAN de R1 en R2 y de R2 en R1 y que existe conectividad
+4. Realiza Troubleshooting para establecer la vecindad OSPF entre R1 y R3, aplica depuración vía "debug ip ospf adjacencies", además puedes guiarte por las siguientes verificaciones:
+Estado interfaces conexión, proceso OSPF activo global y por interfaz, mismatch áreas, passive-interfaces, autenticación, MTU, ACL, tipos de red router-id duplicados
+5. Una vez establecida la vecindad OSPF entre R1 y R3, verifica que hay conectividad completa, entre las redes LAN de R1, R2 y R3
+

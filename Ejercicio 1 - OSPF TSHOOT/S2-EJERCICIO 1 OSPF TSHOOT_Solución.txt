@@ -1,0 +1,319 @@
+CCNP ENARSI
+Curso: OSPF & OSPFv3
+Ejercicio: OSPF TSHOOT 
+Firmware: Routers  -> c7200-advipservicesk9-mz.152-4.S5.bin
+      
+	  
+Escenario: Openwebinars ha conectado dos nuevos proveedores a su red WAN, pero presentan problemas a la hora de desplegar OSPF y no hay conectividad entre las sedes
+
+Completa las siguientes tareas para aplicar troubleshooting y poder establecer la conectividad vía OSPF
+
+1. Verifica que no existe conectividad desde R1 a las redes LAN de R2 y R3, a su vez verifica si existe vecindad OSPF en R1 con R2 y R3
+
+R1#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R1#
+R1#ping 192.168.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.1.1, timeout is 2 seconds:
+.....
+Success rate is 0 percent (0/5)
+R1#
+R1#show ip ospf neighbor
+R1#
+
+_____________________________________________________________________________________
+
+2. Realiza Troubleshooting para establecer la vecindad OSPF entre R1 y R2, aplica depuración vía "debug ip ospf adjacencies", además puedes guiarte por las siguientes verificaciones: 
+Estado interfaces conexión, proceso OSPF activo global y por interfaz, mismatch áreas, passive-interfaces, autenticación, MTU, ACL, tipos de red router-id duplicados
+
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#logging console
+R1(config)#end
+R1#debug ip ospf adj
+OSPF adjacency debugging is on
+R1#
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#logging console
+R2(config)#end
+R2#debug ip ospf adj
+OSPF adjacency debugging is on
+R2#
+
+Se recibe el mensaje de depuración en R1 "OSPF-1 ADJ   Fa0/0: Rcv pkt from 1.1.1.2, area 0.0.0.0, mismatched area 0.0.0.10 in the header"
+
+Se verifica configuración en R1 y R2, la interfaz en R2 está asignada al área 10, se modifica al 0
+
+R2(config)#int fa0/0
+R2(config-if)#ip ospf 1 area 0
+R2(config-if)#
+
+La adyacencia sigue fallando con el siguiente mensaje "OSPF-1 ADJ   Fa0/0: Nbr 2.2.2.2 has smaller interface MTU", la sesión OSPF no se establece:
+
+R1#show ip ospf neighbor
+
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+2.2.2.2           1   EXCHANGE/BDR    00:00:39    1.1.1.2         FastEthernet0/0
+R1#
+
+Se debe revisar la MTU de las interfaces:
+
+R1#show int fa0/0 | in MTU
+  MTU 1500 bytes, BW 100000 Kbit/sec, DLY 100 usec,
+
+interface FastEthernet0/0
+ ip address 1.1.1.2 255.255.255.252
+ ip mtu 1200
+ ip ospf 1 area 0
+ duplex full
+end
+
+Modificar MTU en Fa0/0 de R2 a 1500 bytes:
+
+R2#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R2(config)#int fa0/0
+R2(config-if)#no ip mtu 1200
+R2(config-if)#end
+R2#
+
+R1#show ip ospf neighbor
+
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+2.2.2.2           1   FULL/DR         00:00:32    1.1.1.2         FastEthernet0/0
+R1#
+
+_____________________________________________________________________________________
+
+3. Una vez establecida la vecindad OSPF entre R1 y R2, verifica que se aprenden correctamente las redes LAN de R1 en R2 y de R2 en R1 y que existe conectividad
+
+R1#show ip route ospf
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       + - replicated route, % - next hop override
+
+Gateway of last resort is not set
+
+      172.16.0.0/24 is subnetted, 1 subnets
+O IA     172.16.1.0 [110/2] via 1.1.1.2, 00:02:15, FastEthernet0/0
+R1#
+R1#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 24/28/36 ms
+R1#
+
+R2#show ip route ospf
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       + - replicated route, % - next hop override
+
+Gateway of last resort is not set
+
+      2.0.0.0/29 is subnetted, 1 subnets
+O        2.2.2.0 [110/2] via 1.1.1.1, 00:02:31, FastEthernet0/0
+      10.0.0.0/24 is subnetted, 1 subnets
+O        10.10.10.0 [110/2] via 1.1.1.1, 00:02:31, FastEthernet0/0
+R2#
+R2#ping 10.10.10.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.10.10.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 28/32/40 ms
+R2#
+_____________________________________________________________________________________
+
+4. Realiza Troubleshooting para establecer la vecindad OSPF entre R1 y R3, aplica depuración vía "debug ip ospf adjacencies", además puedes guiarte por las siguientes verificaciones:
+Estado interfaces conexión, proceso OSPF activo global y por interfaz, mismatch áreas, passive-interfaces, autenticación, MTU, ACL, tipos de red router-id duplicados
+
+
+R3#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#logging console
+R3(config)#end
+R3#debug ip ospf adj
+OSPF adjacency debugging is on
+R3#
+
+R1#debug ip ospf adj
+OSPF adjacency debugging is on
+R1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#logging console
+R1(config)#end
+R1#
+
+- Revisión física: se visualiza la interfaz fa1/0 deshabilitada en R3, se reactiva:
+
+R1#show ip int brief
+Interface              IP-Address      OK? Method Status                Protocol
+FastEthernet0/0        1.1.1.1         YES NVRAM  up                    up
+FastEthernet1/0        2.2.2.1         YES NVRAM  up                    up
+Loopback0              10.10.10.1      YES NVRAM  up                    up
+R1#
+
+R3#show ip int brief
+Interface              IP-Address      OK? Method Status                Protocol
+FastEthernet0/0        unassigned      YES NVRAM  administratively down down
+FastEthernet1/0        2.2.2.3         YES NVRAM  administratively down down
+Loopback0              192.168.1.1     YES NVRAM  up                    up
+
+R3#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#int fa1/0
+R3(config-if)#no shutdown
+R3(config-if)#end
+R3#
+
+- Verificación proceso OSPF: configuración global correcta 
+
+R1#show run | section ospf
+ ip ospf network point-to-point
+ ip ospf 1 area 0
+ ip ospf 1 area 0
+ ip ospf 1 area 0
+router ospf 1
+ router-id 1.1.1.1
+ passive-interface default
+ no passive-interface FastEthernet0/0
+ no passive-interface FastEthernet1/0
+R1#
+R1#show run int fa1/0
+Building configuration...
+
+Current configuration : 100 bytes
+!
+interface FastEthernet1/0
+ ip address 2.2.2.1 255.255.255.248
+ ip ospf 1 area 0
+ duplex full
+end
+
+R3#show run | section ospf
+ ip ospf network point-to-point
+ ip ospf 1 area 2
+ ip ospf 1 area 0
+ ip ospf 1 area 0
+router ospf 1
+ router-id 3.3.3.3
+ passive-interface default
+R3#
+R3#show run int fa1/0
+Building configuration...
+
+Current configuration : 100 bytes
+!
+interface FastEthernet1/0
+ ip address 2.2.2.3 255.255.255.248
+ ip ospf 1 area 0
+ duplex full
+end
+
+- Las áreas son correctas tras verificar configuración
+- Passive-interface, en R3 dentro del proceso global hay un passive-interface default, pero la interfaz fa1/0 no tiene la desactivación del passive, se configura
+
+R3#
+R3#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R3(config)#router ospf 1
+R3(config-router)#no passive-interface fa1/0
+R3(config-router)#end
+R3#
+
+R1#show ip ospf neighbor
+
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+3.3.3.3           1   FULL/BDR        00:00:36    2.2.2.3         FastEthernet1/0
+2.2.2.2           1   FULL/DR         00:00:31    1.1.1.2         FastEthernet0/0
+R1#
+
+R3#show ip ospf neighbor
+
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+1.1.1.1           1   FULL/DR         00:00:32    2.2.2.1         FastEthernet1/0
+R3#
+
+_____________________________________________________________________________________
+
+5. Una vez establecida la vecindad OSPF entre R1 y R3, verifica que hay conectividad completa, entre las redes LAN de R1, R2 y R3
+
+R1#show ip route ospf
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       + - replicated route, % - next hop override
+
+Gateway of last resort is not set
+
+      172.16.0.0/24 is subnetted, 1 subnets
+O IA     172.16.1.0 [110/2] via 1.1.1.2, 00:22:33, FastEthernet0/0
+O IA  192.168.1.0/24 [110/2] via 2.2.2.3, 00:01:25, FastEthernet1/0
+R1#
+R1#ping 192.168.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 192.168.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 20/27/32 ms
+R1#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 20/28/36 ms
+R1#
+
+R3#
+R3#show ip route ospf
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       + - replicated route, % - next hop override
+
+Gateway of last resort is not set
+
+      1.0.0.0/30 is subnetted, 1 subnets
+O        1.1.1.0 [110/2] via 2.2.2.1, 00:01:28, FastEthernet1/0
+      10.0.0.0/24 is subnetted, 1 subnets
+O        10.10.10.0 [110/2] via 2.2.2.1, 00:01:28, FastEthernet1/0
+      172.16.0.0/24 is subnetted, 1 subnets
+O IA     172.16.1.0 [110/3] via 2.2.2.1, 00:01:28, FastEthernet1/0
+R3#
+R3#ping 172.16.1.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 172.16.1.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 56/59/64 ms
+R3#
+R3#ping 10.10.10.1
+Type escape sequence to abort.
+Sending 5, 100-byte ICMP Echos to 10.10.10.1, timeout is 2 seconds:
+!!!!!
+Success rate is 100 percent (5/5), round-trip min/avg/max = 20/27/32 ms
+R3#
+_____________________________________________________________________________________
+
+
